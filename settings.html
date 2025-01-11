@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Terminal</title>
+    <script src="script.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            background-color: #2b2b2b;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+        }
+
+        .container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #3a3a3a;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+
+        .section h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .operation-mode {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .operation-mode button {
+            width: 48%;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .operation-mode .manual {
+            background-color: #f0c03e;
+        }
+
+        .operation-mode .automatic {
+            background-color: #a8a83e;
+        }
+
+        .direction-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .direction-controls button {
+            width: 70px;
+            height: 70px;
+            border: none;
+            border-radius: 10px;
+            background-color: #f0c03e;
+            cursor: pointer;
+            font-size: 20px;
+            color: #000;
+        }
+
+        .system-status p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #2a2a2a;
+            padding: clamp(10px, 2vw, 15px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 10px;
+            font-size: clamp(18px, 4vw, 20px);
+        }
+
+        .nav-button.active {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .direction-controls button {
+                width: 60px;
+                height: 60px;
+            }
+
+            .operation-mode button {
+                font-size: 14px;
+            }
+
+            .container h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Control Terminal</h1>
+
+        <div class="section operation-mode">
+            <h2>Operation Mode</h2>
+            <button class="manual">Manual</button>
+            <button class="automatic">Automatic</button>
+        </div>
+
+        <div class="section direction-controls">
+            <h2>Direction Controls</h2>
+            <button>&uarr;</button>
+            <button>&larr;</button>
+            <button>&rarr;</button>
+            <button>&darr;</button>
+        </div>
+
+        <div class="section system-status">
+            <h2>System Status</h2>
+            <p><strong>Current Mode:</strong> Manual</p>
+            <p><strong>System Power:</strong> Online</p>
+            <p><strong>Last Updated:</strong> Just now</p>
+        </div>
+
+        <div class="nav-bar">
+            <button class="nav-button active" id="settingsButton">⚙️</button>
+            <button class="nav-button" id="homeButton">🏠</button>
+            <button class="nav-button" id="profileButton">👤</button>
+        </div>
+    </div>
+</body>
+</html>

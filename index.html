@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="script.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .air-quality {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .quality-circle {
+            width: clamp(120px, 30vw, 180px);
+            height: clamp(120px, 30vw, 180px);
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            color: black;
+            transition: background-color 0.5s;
+        }
+
+        .quality-value {
+            font-size: clamp(24px, 6vw, 48px);
+            font-weight: bold;
+        }
+
+        .quality-label {
+            font-size: clamp(14px, 3vw, 18px);
+        }
+
+        .metric-card {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-container {
+            height: clamp(150px, 30vh, 200px);
+            width: 100%;
+        }
+
+        .controls {
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #FFD700;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background-color: #4CAF50;
+        }
+
+        .status-offline {
+            background-color: #f44336;
+        }
+
+        .alert {
+            background-color: #f44336;
+            color: white;
+            padding: clamp(8px, 2vw, 10px);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #2a2a2a;
+            padding: clamp(10px, 2vw, 15px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 10px;
+            font-size: clamp(18px, 4vw, 20px);
+        }
+
+        .nav-button.active {
+            color: white;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+            }
+
+            .metric-card {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alert" id="alert">System Alert: High temperature detected!</div>
+
+        <div class="air-quality">
+            <h1>Air Quality</h1>
+            <div class="quality-circle" id="qualityCircle">
+                <div class="quality-value" id="qualityValue">--</div>
+                <div class="quality-label" id="qualityLabel">Loading...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>System Status: <span class="status-indicator status-online" id="statusIndicator"></span>
+                    <span id="statusText">Online</span></label>
+            </div>
+            <div class="control-group">
+                <label>Auto-Monitoring:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoMonitor" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span>Temperature</span>
+                    <span class="metric-value" id="temperatureValue">--°C</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span>Humidity</span>
+                    <span class="metric-value" id="humidityValue">--%</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="humidityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-button active" id="settingsButton">⚙️</button>
+        <button class="nav-button" id="homeButton">🏠</button>
+        <button class="nav-button" id="profileButton">👤</button>
+    </div>
+
+    <script>
+        // Environment Simulator
+        class EnvironmentSimulator {
+            constructor() {
+                this.baseTemp = 24;
+                this.baseHumidity = 65;
+                this.time = new Date();
+            }
+
+            getTemperature() {
+                const hourVariation = Math.sin(this.time.getHours() / 24 * 2 * Math.PI) * 3;
+                const randomVariation = (Math.random() - 0.5) * 2;
+                return this.baseTemp + hourVariation + randomVariation;
+            }
+
+            getHumidity() {
+                const hourVariation = Math.cos(this.time.getHours() / 24 * 2 * Math.PI) * 5;
+                const randomVariation = (Math.random() - 0.5) * 3;
+                return this.baseHumidity + hourVariation + randomVariation;
+            }
+
+            getAirQuality() {
+                const temp = this.getTemperature();
+                const humidity = this.getHumidity();
+                const quality = 100 - Math.abs(temp - 22) - Math.abs(humidity - 50) / 2;
+                return Math.max(0, Math.min(100, quality));
+            }
+
+            updateTime() {
+                this.time = new Date();
+            }
+        }
+
+        // Initialize charts
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#333'
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#fff'
+                    }
+                }
+            }
+        };
+
+        const tempChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature',
+                    data: [],
+                    backgroundColor: '#FFD700',
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        max: 40
+                    }
+                }
+            }
+        });
+
+        const humidityChart = new Chart(document.getElementById('humidityChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Humidity',
+                    data: [],
+                    backgroundColor: '#FFD700',
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        max: 80
+                    }
+                }
+            }
+        });
+
+        // Initialize simulator and UI elements
+        const simulator = new EnvironmentSimulator();
+        const elements = {
+            qualityCircle: document.getElementById('qualityCircle'),
+            qualityValue: document.getElementById('qualityValue'),
+            qualityLabel: document.getElementById('qualityLabel'),
+            temperatureValue: document.getElementById('temperatureValue'),
+            humidityValue: document.getElementById('humidityValue'),
+            autoMonitor: document.getElementById('autoMonitor'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            statusText: document.getElementById('statusText'),
+            alert: document.getElementById('alert')
+        };
+
+        // Data arrays
+        const data = {
+            temp: [],
+            humidity: [],
+            labels: []
+        };
+
+        function updateCharts(temp, humidity, time) {
+            const timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2, '0');
+
+            data.labels.push(timeStr);
+            data.temp.push(temp);
+            data.humidity.push(humidity);
+
+            if (data.labels.length > 5) {
+                data.labels.shift();
+                data.temp.shift();
+                data.humidity.shift();
+            }
+
+            tempChart.data.labels = data.labels;
+            tempChart.data.datasets[0].data = data.temp;
+            tempChart.update();
+
+            humidityChart.data.labels = data.labels;
+            humidityChart.data.datasets[0].data = data.humidity;
+            humidityChart.update();
+        }
+
+        function getQualityLabel(value) {
+            if (value >= 80) return 'Excellent';
+            if (value >= 60) return 'Good';
+            if (value >= 40) return 'Moderate';
+            if (value >= 20) return 'Poor';
+            return 'Hazardous';
+        }
+
+        function getQualityColor(value) {
+            if (value >= 80) return '#4CAF50';
+            if (value >= 60) return '#8BC34A';
+            if (value >= 40) return '#FFD700';
+            if (value >= 20) return '#FF9800';
+            return '#f44336';
+        }
+
+        function updateUI() {
+            if (!elements.autoMonitor.checked) return;
+
+            simulator.updateTime();
+            const temp = simulator.getTemperature();
+            const humidity = simulator.getHumidity();
+            const quality = simulator.getAirQuality();
+
+            elements.temperatureValue.textContent = temp.toFixed(1) + '°C';
+            elements.humidityValue.textContent = humidity.toFixed(1) + '%';
+            elements.qualityValue.textContent = Math.round(quality);
+            elements.qualityLabel.textContent = getQualityLabel(quality);
+            elements.qualityCircle.style.backgroundColor = getQualityColor(quality);
+
+            updateCharts(temp, humidity, simulator.time);
+
+            elements.alert.style.display = temp > 30 ? 'block' : 'none';
+        }
+
+        // Event listeners
+        elements.autoMonitor.addEventListener('change', function() {
+            elements.statusIndicator.className = 'status-indicator ' + 
+                (this.checked ? 'status-online' : 'status-offline');
+            elements.statusText.textContent = this.checked ? 'Online' : 'Offline';
+        });
+
+        // Start monitoring
+        setInterval(updateUI, 2000);
+        updateUI(); // Initial update
+    </script>
+</body>
+</html>
